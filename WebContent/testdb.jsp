@@ -1,6 +1,9 @@
-<%@page import="java.sql.PreparedStatement"%>
-<%@page import="java.sql.DriverManager"%>
-<%@page import="java.sql.Connection"%>
+<%@page import="java.sql.PreparedStatement"%>		
+<%@page import="javax.sql.DataSource"%>		
+<%@page import="javax.naming.InitialContext"%>		
+<%@page import="javax.naming.Context"%>		
+<%@page import="java.sql.Connection"%>		
+<%@page import="java.sql.ResultSet"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
 <!DOCTYPE html>
@@ -11,38 +14,47 @@
 </head>
 <body>
 	<%
-		Connection conn = null;
-		String driver = "oracle.jdbc.driver.OracleDriver";
-		String url = "jdbc:oracle:thin:@localhost:1521:KnDB";
-
+		Connection conn = null;	
 		Boolean connect = false;
 
+		
+		
+		
 		try {
-			String sql = "INSERT INTO USERS (NAME, PW, EMAIL) VALUES (?, ?, ?)";
-			Class.forName(driver);
-			conn = DriverManager.getConnection(url, "knuser", "system"); //자신의 아이디와 비밀번호
-			PreparedStatement pstmt = conn.prepareStatement(sql);
-			pstmt.setString(1,"추연진");
-			pstmt.setString(2,"1234");
-			pstmt.setString(3,"choo@a.com");
-			pstmt.executeUpdate();
+			Context init = new InitialContext();		 
+			DataSource ds = (DataSource)init.lookup("java:comp/env/jdbc/kndb");
+			conn = ds.getConnection();
+			
+			String sql="SELECT * FROM users WHERE email = ? AND pw = ?";	
+			PreparedStatement pstmt = conn.prepareStatement(sql);	
+			pstmt.setString(1, "a@a.com");	
+			pstmt.setString(2, "1");	
+			
+			
+			ResultSet rs = pstmt.executeQuery();		
+			if (rs.next()) {		
+				System.out.println(rs.getString("name"));	
+				System.out.println(rs.getString("pw"));	
+				System.out.println(rs.getString("email"));	
+			} else {		
+				System.out.println("아이디나 비밀번호가 틀립니다.");	
+			}		
+					
+			
 			connect = true;
 			conn.close();
-		} catch (Exception e) {
-			connect = false;
-			e.printStackTrace();
-		}
-	%>
-	<%
-		if (connect == true) {
-	%>
-	연결되었습니다.
-	<%
-		} else {
-	%>
-	연결에 실패하였습니다.
-	<%
-		}
+			
+			
+		} catch (Exception e) {			
+			connect = false;		
+			e.printStackTrace();		
+		}			
+					
+		if (connect == true) {			
+			out.println("연결되었습니다.");		
+		} else {			
+			out.println("연결실패.");		
+		}			
 	%>
 </body>
 </html>
